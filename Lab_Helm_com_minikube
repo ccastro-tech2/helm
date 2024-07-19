@@ -156,4 +156,3 @@ perl
 Copy code
 
 Este arquivo `README.md` fornece uma visão clara dos passos necessários para configurar o ambiente e fazer o deploy do 
-NGINX usando Minikube e Helm, incluindo a limpeza de instalações anteriores. Você pode copiar e colar este conteúdo em um arquivo `README.md` e subi-lo no seu repositório Git. Se precisar de mais assistência, estou à disposição para ajudar!
