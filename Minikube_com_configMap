@@ -1,0 +1,253 @@
+# Configuração de Laboratório com Minikube e Helm
+
+Este documento descreve os passos para configurar um cluster Kubernetes local usando Minikube, instalar o Helm e usar um Helm Chart para deployar o Apache com uma página HTML personalizada. Também inclui os passos para limpar instalações anteriores.
+
+## Pré-requisitos
+
+- Docker instalado
+- `kubectl` instalado
+- `helm` instalado
+
+## Limpeza de Instalações Anteriores
+
+Antes de iniciar um novo laboratório, é recomendável limpar as instalações anteriores.
+
+### Parar e Excluir o Minikube
+
+Para parar e excluir o cluster Minikube existente:
+
+```sh
+minikube stop
+minikube delete
+Remover Recursos Kubernetes
+Certifique-se de que não há recursos restantes nos namespaces padrão e customizados:
+
+sh
+Copy code
+kubectl delete --all pods --all-namespaces
+kubectl delete --all services --all-namespaces
+kubectl delete --all deployments --all-namespaces
+Remover Configurações Locais de Minikube (Opcional)
+Se desejar remover todas as configurações locais do Minikube:
+
+sh
+Copy code
+rm -rf ~/.minikube
+rm -rf ~/.kube
+Limpar Docker
+Para garantir que todos os containers, imagens, volumes e redes Docker sejam removidos:
+
+sh
+Copy code
+docker stop $(docker ps -aq)
+docker rm $(docker ps -aq)
+docker rmi $(docker images -q)
+docker volume rm $(docker volume ls -q)
+docker network rm $(docker network ls -q)
+docker system prune -a -f --volumes
+Configuração de Minikube, Helm e Deploy do Apache
+1. Iniciar o Minikube
+Inicie um cluster Kubernetes local com Minikube alocando 4 CPUs e 8 GB de RAM:
+
+sh
+Copy code
+minikube start --cpus=4 --memory=8192
+2. Instalar kubectl
+Se o kubectl ainda não estiver instalado, use os comandos abaixo para instalá-lo.
+
+Linux:
+
+sh
+Copy code
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin/
+3. Instalar Helm
+Se o Helm ainda não estiver instalado, use o comando abaixo para instalá-lo.
+
+Linux e macOS:
+
+sh
+Copy code
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+4. Adicionar o Repositório Bitnami
+Adicione o repositório de charts Bitnami e atualize a lista de charts disponíveis:
+
+sh
+Copy code
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo update
+5. Instalar o Chart do Apache
+Instale o Apache usando Helm:
+
+sh
+Copy code
+helm install my-apache bitnami/apache
+6. Verificar a Instalação
+Verifique se os pods e serviços foram criados corretamente:
+
+sh
+Copy code
+kubectl get pods
+kubectl get svc
+7. Expor o Serviço com Minikube
+Exponha o serviço Apache para acesso externo:
+
+sh
+Copy code
+minikube service my-apache
+8. Criar uma Página HTML Personalizada
+Crie um arquivo index.html simples com o conteúdo a ser servido pelo Apache:
+
+html
+Copy code
+<!-- index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Custom Apache Page</title>
+</head>
+<body>
+    <h1>Hello from Apache on Kubernetes!</h1>
+</body>
+</html>
+9. Criar um ConfigMap no Kubernetes com o Arquivo HTML
+Use o comando abaixo para criar um ConfigMap chamado apache-web-content a partir do arquivo index.html:
+
+sh
+Copy code
+kubectl create configmap apache-web-content --from-file=index.html
+10. Atualizar o Helm Chart para Usar o ConfigMap
+Edite ou crie um arquivo values.yaml para configurar o Helm Chart do Apache para usar o ConfigMap:
+
+yaml
+Copy code
+# values.yaml
+persistence:
+  enabled: false
+
+volumeMounts:
+  - name: web-content
+    mountPath: /opt/bitnami/apache/htdocs
+    subPath: index.html
+
+volumes:
+  - name: web-content
+    configMap:
+      name: apache-web-content
+      items:
+      - key: index.html
+        path: index.html
+11. Reinstalar ou Atualizar a Instalação do Apache
+Use o comando helm upgrade para aplicar as mudanças:
+
+sh
+Copy code
+helm upgrade my-apache bitnami/apache -f values.yaml
+12. Verificar a Instalação
+Verifique se os pods e serviços foram criados corretamente:
+
+sh
+Copy code
+kubectl get pods
+kubectl get svc
+Exponha o serviço Apache para acesso externo usando Minikube:
+
+sh
+Copy code
+minikube service my-apache
+Resumo dos Comandos
+Aqui está o resumo completo dos comandos:
+
+sh
+Copy code
+# Parar e excluir o Minikube
+minikube stop
+minikube delete
+
+# Remover todos os recursos Kubernetes
+kubectl delete --all pods --all-namespaces
+kubectl delete --all services --all-namespaces
+kubectl delete --all deployments --all-namespaces
+
+# Remover configurações locais do Minikube (Opcional)
+rm -rf ~/.minikube
+rm -rf ~/.kube
+
+# Limpar Docker
+docker stop $(docker ps -aq)
+docker rm $(docker ps -aq)
+docker rmi $(docker images -q)
+docker volume rm $(docker volume ls -q)
+docker network rm $(docker network ls -q)
+docker system prune -a -f --volumes
+
+# Iniciar Minikube
+minikube start --cpus=4 --memory=8192
+
+# Instalar kubectl (Linux)
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin/
+
+# Instalar Helm (Linux e macOS)
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+# Adicionar repositório Bitnami e atualizar
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo update
+
+# Instalar o Apache usando Helm
+helm install my-apache bitnami/apache
+
+# Verificar a instalação
+kubectl get pods
+kubectl get svc
+
+# Expor o serviço Apache com Minikube
+minikube service my-apache
+
+# Criar um arquivo HTML personalizado
+echo '
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Custom Apache Page</title>
+</head>
+<body>
+    <h1>Hello from Apache on Kubernetes!</h1>
+</body>
+</html>
+' > index.html
+
+# Criar um ConfigMap com o arquivo HTML
+kubectl create configmap apache-web-content --from-file=index.html
+
+# Criar ou editar o arquivo values.yaml para usar o ConfigMap
+echo '
+persistence:
+  enabled: false
+
+volumeMounts:
+  - name: web-content
+    mountPath: /opt/bitnami/apache/htdocs
+    subPath: index.html
+
+volumes:
+  - name: web-content
+    configMap:
+      name: apache-web-content
+      items:
+      - key: index.html
+        path: index.html
+' > values.yaml
+
+# Atualizar a instalação do Apache usando Helm
+helm upgrade my-apache bitnami/apache -f values.yaml
+
+# Verificar a instalação
+kubectl get pods
+kubectl get svc
+
+# Expor o serviço Apache com Minikube
+minikube service my-apache
