@@ -1,0 +1,159 @@
+Lab Helm com minikube
+
+markdown
+Copy code
+# Configuração de Laboratório com Minikube e Helm
+
+Este documento descreve os passos para configurar um cluster Kubernetes local usando Minikube, instalar o Helm e usar um Helm Chart para deployar o NGINX. Também inclui os passos para limpar instalações anteriores.
+
+## Pré-requisitos
+
+- Docker instalado
+- `kubectl` instalado
+- `helm` instalado
+
+## Limpeza de Instalações Anteriores
+
+Antes de iniciar um novo laboratório, é recomendável limpar as instalações anteriores.
+
+### Parar e Excluir o Minikube
+
+Para parar e excluir o cluster Minikube existente:
+
+```sh
+minikube stop
+minikube delete
+Remover Recursos Kubernetes
+Certifique-se de que não há recursos restantes nos namespaces padrão e customizados:
+
+sh
+Copy code
+kubectl delete --all pods --all-namespaces
+kubectl delete --all services --all-namespaces
+kubectl delete --all deployments --all-namespaces
+Remover Configurações Locais de Minikube (Opcional)
+Se desejar remover todas as configurações locais do Minikube:
+
+sh
+Copy code
+rm -rf ~/.minikube
+rm -rf ~/.kube
+Limpar Docker
+Para garantir que todos os containers, imagens, volumes e redes Docker sejam removidos:
+
+sh
+Copy code
+docker stop $(docker ps -aq)
+docker rm $(docker ps -aq)
+docker rmi $(docker images -q)
+docker volume rm $(docker volume ls -q)
+docker network rm $(docker network ls -q)
+docker system prune -a -f --volumes
+Configuração de Minikube, Helm e Deploy do NGINX
+1. Iniciar o Minikube
+Inicie um cluster Kubernetes local com Minikube alocando 4 CPUs e 8 GB de RAM:
+
+sh
+Copy code
+minikube start --cpus=4 --memory=8192
+2. Instalar kubectl
+Se o kubectl ainda não estiver instalado, use os comandos abaixo para instalá-lo.
+
+Linux:
+
+sh
+Copy code
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin/
+3. Instalar Helm
+Se o Helm ainda não estiver instalado, use o comando abaixo para instalá-lo.
+
+Linux e macOS:
+
+sh
+Copy code
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+4. Adicionar o Repositório Bitnami
+Adicione o repositório de charts Bitnami e atualize a lista de charts disponíveis:
+
+sh
+Copy code
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo update
+5. Instalar o Chart do NGINX
+Instale o NGINX usando Helm:
+
+sh
+Copy code
+helm install my-nginx bitnami/nginx
+6. Verificar a Instalação
+Verifique se os pods e serviços foram criados corretamente:
+
+sh
+Copy code
+kubectl get pods
+kubectl get svc
+7. Expor o Serviço com Minikube
+Exponha o serviço NGINX para acesso externo:
+
+sh
+Copy code
+minikube service my-nginx
+Resumo dos Comandos
+Aqui está o resumo completo dos comandos:
+
+sh
+Copy code
+# Parar e excluir o Minikube
+minikube stop
+minikube delete
+
+# Remover todos os recursos Kubernetes
+kubectl delete --all pods --all-namespaces
+kubectl delete --all services --all-namespaces
+kubectl delete --all deployments --all-namespaces
+
+# Remover configurações locais do Minikube (Opcional)
+rm -rf ~/.minikube
+rm -rf ~/.kube
+
+# Limpar Docker
+docker stop $(docker ps -aq)
+docker rm $(docker ps -aq)
+docker rmi $(docker images -q)
+docker volume rm $(docker volume ls -q)
+docker network rm $(docker network ls -q)
+docker system prune -a -f --volumes
+
+# Iniciar Minikube
+minikube start --cpus=4 --memory=8192
+
+# Instalar kubectl (Linux)
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin/
+
+# Instalar Helm (Linux e macOS)
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+# Adicionar repositório Bitnami e atualizar
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo update
+
+# Instalar o NGINX usando Helm
+helm install my-nginx bitnami/nginx
+
+# Verificar a instalação
+kubectl get pods
+kubectl get svc
+
+# Expor o serviço NGINX com Minikube
+minikube service my-nginx
+Este guia deve ajudar a configurar um ambiente Kubernetes local usando Minikube e Helm, e a implantar o NGINX. Se precisar de mais assistência, consulte a documentação oficial do Minikube e documentação oficial do Helm.
+
+perl
+Copy code
+
+Este arquivo `README.md` fornece uma visão clara dos passos necessários para configurar o ambiente e fazer o deploy do 
+NGINX usando Minikube e Helm, incluindo a limpeza de instalações anteriores. Você pode copiar e colar este conteúdo em um arquivo `README.md` e subi-lo no seu repositório Git. Se precisar de mais assistência, estou à disposição para ajudar!
