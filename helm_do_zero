@@ -1,0 +1,212 @@
+# Helm Chart para uma Aplicação Simples
+
+Este repositório contém um exemplo de Helm chart para uma aplicação simples que serve uma página HTML estática usando NGINX.
+
+## Estrutura do Diretório
+
+```bash
+simple-app/
+├── charts
+├── Chart.yaml
+├── templates
+│   ├── deployment.yaml
+│   ├── _helpers.tpl
+│   ├── service.yaml
+└── values.yaml
+
+
+Conteúdo dos Arquivos
+Chart.yaml
+yaml
+Copy code
+apiVersion: v2
+name: simple-app
+description: A simple Helm chart for a static HTML application
+type: application
+version: 0.1.0
+appVersion: "1.0"
+values.yaml
+yaml
+Copy code
+replicaCount: 1
+
+image:
+  repository: nginx
+  tag: "stable"
+  pullPolicy: IfNotPresent
+
+service:
+  type: NodePort
+  port: 80
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+templates/deployment.yaml
+yaml
+Copy code
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "simple-app.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "simple-app.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "simple-app.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "simple-app.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: static-html
+              mountPath: /usr/share/nginx/html
+      volumes:
+        - name: static-html
+          configMap:
+            name: {{ include "simple-app.fullname" . }}-html
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "simple-app.fullname" . }}-html
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Simple App</title>
+    </head>
+    <body>
+        <h1>Hello from Simple App!</h1>
+    </body>
+    </html>
+templates/service.yaml
+yaml
+Copy code
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "simple-app.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "simple-app.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 80
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: {{ include "simple-app.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+templates/_helpers.tpl
+yaml
+Copy code
+{{- define "simple-app.labels" -}}
+app.kubernetes.io/name: {{ include "simple-app.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+{{- end }}
+
+{{- define "simple-app.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "simple-app.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{- define "simple-app.name" -}}
+{{ .Chart.Name }}
+{{- end }}
+
+{{- define "simple-app.fullname" -}}
+{{ include "simple-app.name" . }}-{{ .Release.Name }}
+{{- end }}
+Passos para Implantação
+Crie a estrutura do chart:
+
+bash
+Copy code
+helm create simple-app
+Limpe os arquivos desnecessários:
+
+bash
+Copy code
+cd simple-app
+rm -rf templates/tests
+rm templates/NOTES.txt
+rm templates/serviceaccount.yaml
+rm templates/hpa.yaml
+rm templates/ingress.yaml
+Atualize os arquivos Chart.yaml, values.yaml, templates/deployment.yaml, templates/service.yaml e templates/_helpers.tpl conforme mencionado acima.
+
+Instale o chart:
+
+bash
+Copy code
+helm install my-simple-app ./simple-app
+Verifique os recursos criados:
+
+bash
+Copy code
+kubectl get all
+Acesse a aplicação:
+
+bash
+Copy code
+minikube service my-simple-app
+Problemas Comuns e Soluções
+Erro de SVC_NOT_FOUND
+Se você encontrar o erro Service 'my-simple-app' was not found, certifique-se de que o serviço foi criado corretamente e está rodando. Verifique os serviços:
+
+bash
+Copy code
+kubectl get svc
+Erro de cannot unmarshal number into Go struct field
+Se você encontrar o erro cannot unmarshal number into Go struct field, certifique-se de que todos os valores nos rótulos (labels) são strings, usando | quote onde necessário.
+
+Remover Instalações Anteriores
+Para remover instalações anteriores e garantir que o cluster esteja limpo:
+
+bash
+Copy code
+helm uninstall my-magento
+kubectl delete pods --all
+kubectl delete svc --all
+Reinstalar a Aplicação Simples
+bash
+Copy code
+helm install my-simple-app ./simple-app
+Verificar e Acessar a Aplicação
+Verifique os serviços novamente:
+
+bash
+Copy code
+kubectl get svc
+E acesse a aplicação:
+
+bash
+Copy code
+minikube service my-simple-app
+Conclusão
+Este guia passo a passo mostra como criar, configurar e implantar um Helm chart simples para uma aplicação estática usando NGINX. Ele também aborda a solução de problemas comuns que podem surgir durante o processo de implantação.
